@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+</head>
+<body>
+    <form id="loginForm" action="/login" method="POST">
+        <input type="text" name="username" placeholder="Username" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <button type="submit">Login</button>
+    </form>
+    <button id="registerButton">Register</button>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const response = await fetch(this.action, {
+                method: 'POST',
+                body: new URLSearchParams(formData),
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            });
+            const result = await response.text();
+            if (response.ok) {
+                console.log('Login successful:', result);
+                window.location.href = '/qb_rankings.html';  // Redirect to QB Rankings page
+            } else {
+                console.error('Error:', result);
+                alert('Login failed: ' + result);  // Display an error message
+            }
+        });
+
+        document.getElementById('registerButton').addEventListener('click', function () {
+            window.location.href = '/register.html';  // Redirect to the registration page
+        });
+    </script>
+</body>
+</html>
