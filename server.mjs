@@ -55,7 +55,12 @@ async function createTables() {
         CREATE TABLE IF NOT EXISTS qb_rankings (
             id SERIAL PRIMARY KEY,
             user_id INT REFERENCES users(id),
-            rankings JSONB NOT NULL,
+            player_id VARCHAR(255) REFERENCES player_data(player_id),
+            name VARCHAR(255),
+            team VARCHAR(255),
+            position VARCHAR(255),
+            opponent VARCHAR(255),
+            projected_points NUMERIC,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
@@ -79,9 +84,9 @@ app.use(session({
 }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Fetch player data from database
+// Fetch player data from the qb_rankings table
 async function fetchPlayerDataFromDatabase() {
-    const result = await pool.query('SELECT * FROM default_qb_rankings');
+    const result = await pool.query('SELECT player_id, long_name, team, pos, ppr AS projected_points FROM qb_rankings ORDER BY ppr DESC LIMIT 32');
     return result.rows;
 }
 
@@ -89,6 +94,7 @@ async function fetchPlayerDataFromDatabase() {
 app.get('/player-data', async (req, res) => {
     try {
         const data = await fetchPlayerDataFromDatabase();
+        console.log('Sending player data:', data); // Log the data being sent
         res.json(data);
     } catch (err) {
         console.error('Error fetching player data:', err);
@@ -97,7 +103,7 @@ app.get('/player-data', async (req, res) => {
 });
 
 // Fetch QB rankings for the user
-app.get('/api/qb-rankings', async (req, res) => {
+app.get('/get-rankings', async (req, res) => {
     const user = req.session.user;
     if (!user) {
         return res.status(401).send('Unauthorized');
@@ -105,13 +111,15 @@ app.get('/api/qb-rankings', async (req, res) => {
     try {
         const result = await pool.query('SELECT rankings FROM users WHERE username = $1', [user]);
         if (result.rows.length > 0) {
-            res.json(result.rows[0].rankings);
+            const rankings = result.rows[0].rankings || []; // Ensure an array is returned
+            console.log('Sending rankings:', rankings);
+            res.json(rankings);
         } else {
-            res.json([]);
+            res.json([]); // Ensure an array is returned
         }
     } catch (error) {
         console.error('Database error:', error);
-        res.status(500).send('Error fetching QB rankings');
+        res.status(500).send('Error fetching rankings');
     }
 });
 
