@@ -1,11 +1,10 @@
 import express from 'express';
 import path from 'path';
-import User from './models/user.js';
 import bodyParser from 'body-parser';
 import session from 'express-session';
+import pgSession from 'connect-pg-simple';
 import pkg from 'pg';
 const { Pool } = pkg;
-import fetch from 'node-fetch';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import dotenv from 'dotenv';
@@ -26,13 +25,57 @@ const pool = new Pool({
     },
 });
 
+// Function to create tables if they don't exist
+async function createTables() {
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            username VARCHAR(255) UNIQUE NOT NULL,
+            password VARCHAR(255) NOT NULL,
+            rankings JSONB DEFAULT '{}'
+        );
+    `);
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS player_data (
+            id SERIAL PRIMARY KEY,
+            player_id VARCHAR(255) UNIQUE NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            team VARCHAR(255),
+            position VARCHAR(255),
+            projected_points NUMERIC,
+            live_points NUMERIC,
+            opponent VARCHAR(255),
+            matchup_week INT,
+            injury_status VARCHAR(255),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    `);
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS qb_rankings (
+            id SERIAL PRIMARY KEY,
+            user_id INT REFERENCES users(id),
+            rankings JSONB NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    `);
+}
+
+createTables().catch(err => console.error('Error creating tables:', err));
+
 // Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(session({
-    secret: 'secret-key',
+    store: new (pgSession(session))({
+        pool: pool,
+        tableName: 'session',
+    }),
+    secret: 'your-secret-key', // Use a strong secret key
     resave: false,
-    saveUninitialized: true
+    saveUninitialized: false,
+    cookie: { secure: false } // Set to true if using HTTPS
 }));
 app.use(express.static(path.join(__dirname, 'public')));
 
