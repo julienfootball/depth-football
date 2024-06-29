@@ -94,3 +94,4 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = '/index.html';
     });
 });
+// This is a test comment to ensure file modification is detected
