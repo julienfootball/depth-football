@@ -30,8 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Iterate through rankings
                     for (let i = 0; i < userRankings.length && i < friendRankings.length; i++) {
-                        const userPlayer = userRankings[i].name;
-                        const friendPlayer = friendRankings[i].name;
+                        const userPlayer = userRankings[i].long_name;
+                        const friendPlayer = friendRankings[i].long_name;
 
                         console.log(`Evaluating: User Player - ${userPlayer}, Friend Player - ${friendPlayer}`);
 
@@ -42,8 +42,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
 
                         // Find indices of the current players in the other user's rankings
-                        const userPlayerIndexInFriendRankings = friendRankings.findIndex(player => player.name === userPlayer);
-                        const friendPlayerIndexInUserRankings = userRankings.findIndex(player => player.name === friendPlayer);
+                        const userPlayerIndexInFriendRankings = friendRankings.findIndex(player => player.long_name === userPlayer);
+                        const friendPlayerIndexInUserRankings = userRankings.findIndex(player => player.long_name === friendPlayer);
 
                         // Check if either player is unassignable (ranked lower than the opposing friend)
                         if (userPlayerIndexInFriendRankings !== -1 && userPlayerIndexInFriendRankings < i) {
